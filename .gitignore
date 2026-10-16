@@ -1,0 +1,12 @@
+node_modules/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Server certificates and local configuration are not distribution assets.
+*.pem
+*.key
+*.pfx
+*.p12
+.env
+.env.*

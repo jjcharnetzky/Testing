@@ -1,0 +1,15 @@
+import { useMemo, useState } from 'react';
+import { FileCheck2, ArrowLeft, ArrowRight } from 'lucide-react';
+import type { Project } from '../core/model';
+import { type Layout } from '../core/layout';
+import { svgSheet } from '../core/export';
+import { fonts } from '../core/fonts';
+export function PrintLayout({p,layout,ready}:{p:Project;layout:Layout;ready:boolean}) {
+  const [page,setPage]=useState(0),[displayCount,setDisplayCount]=useState(50);
+  const current=Math.min(page,layout.sheets.length-1),sheet=layout.sheets[current];
+  const svg=useMemo(()=>ready&&sheet?svgSheet(p,sheet,fonts).replace(/<\?xml[^>]*>/,'').replace('</title>','</title>'+sheet.placements.map(r=>`<rect x="${r.x}" y="${r.y}" width="${r.width}" height="${r.height}" fill="white"/>`).join('')):'',[p,sheet,ready]);
+  return <div className="print-layout"><div className="print-heading"><div><h3>Rozmieszczenie na materiale</h3><p>Skala 1:1 w eksporcie · półki od lewej do prawej</p></div><div className="page-stepper"><button className="icon-btn" aria-label="Poprzedni arkusz" disabled={current<=0} onClick={()=>setPage(current-1)}><ArrowLeft size={16}/></button><span>Arkusz {current+1} / {layout.sheets.length}</span><button className="icon-btn" aria-label="Następny arkusz" disabled={current>=layout.sheets.length-1} onClick={()=>setPage(current+1)}><ArrowRight size={16}/></button></div></div>
+    <div className="sheet-preview"><div className="sheet-width">← <span>{sheet?.width} mm · szerokość robocza</span> →</div><div className="sheet-content" style={{backgroundColor:'#eef0e9'}} dangerouslySetInnerHTML={{__html:svg}}/><div className="sheet-length">Długość arkusza: {sheet?.height.toLocaleString('pl-PL')} mm <span>• Kolorowe tło oznacza niewykorzystany materiał i nie trafia do eksportu.</span></div></div>
+    <div className="run-summary"><h3><FileCheck2 size={17}/> Zestawienie przed eksportem</h3><table><thead><tr><th>Rodzaj etykiety</th><th>Sztuk</th><th>Pierwszy numer</th><th>Ostatni numer</th></tr></thead><tbody>{p.types.map(t=>{const items=layout.sheets.flatMap(s=>s.placements).filter(r=>r.label.typeId===t.id);return <tr key={t.id}><td>{t.name}</td><td>{items.length}</td><td className="mono">{items[0]?.label.serial??'—'}</td><td className="mono">{items.at(-1)?.label.serial??'—'}</td></tr>;})}</tbody></table><details><summary>Wszystkie etykiety i przypisane numery ({layout.count})</summary><div className="serial-table"><table><thead><tr><th>Lp.</th><th>Rodzaj</th><th>Numer seryjny</th><th>Wyrób</th><th>Arkusz · X / Y mm</th></tr></thead><tbody>{layout.sheets.flatMap((s,i)=>s.placements.map(r=>({...r,page:i+1}))).slice(0,displayCount).map((r,i)=><tr key={r.label.id}><td>{i+1}</td><td>{p.types.find(t=>t.id===r.label.typeId)?.name}</td><td className="mono">{r.label.serial}</td><td>{r.label.product??'—'}</td><td>{r.page} · {r.x} / {r.y}</td></tr>)}</tbody></table></div>{displayCount<layout.count&&<button className="button small" onClick={()=>setDisplayCount(displayCount+100)}>Pokaż kolejnych 100</button>}</details></div>
+  </div>;
+}

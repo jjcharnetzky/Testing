@@ -1,0 +1,51 @@
+Local runtime dependencies and fonts
+
+@pdf-lib/fontkit@1.1.1 — MIT
+{"type":"git","url":"git://github.com/Hopding/fontkit.git"}
+License declared in package metadata. README copied for original notice.
+
+pako@1.0.11 — (MIT AND Zlib)
+"nodeca/pako"
+Included license: LICENSE
+
+fflate@0.8.2 — MIT
+"https://github.com/101arrowz/fflate"
+Included license: LICENSE
+
+lucide-react@0.468.0 — ISC
+{"type":"git","url":"https://github.com/lucide-icons/lucide.git","directory":"packages/lucide-react"}
+Included license: LICENSE
+
+pdf-lib@1.17.1 — MIT
+"git+https://github.com/Hopding/pdf-lib.git"
+Included license: LICENSE.md
+
+@pdf-lib/standard-fonts@1.0.0 — MIT
+"https://github.com/Hopding/standard-fonts.git"
+Included license: LICENSE.md
+
+@pdf-lib/upng@1.0.1 — MIT
+{"type":"git","url":"https://github.com/Hopding/upng"}
+Included license: LICENSE
+
+tslib@1.14.1 — 0BSD
+{"type":"git","url":"https://github.com/Microsoft/tslib.git"}
+Included license: LICENSE.txt
+
+react@19.0.0 — MIT
+{"type":"git","url":"https://github.com/facebook/react.git","directory":"packages/react"}
+Included license: LICENSE
+
+react-dom@19.0.0 — MIT
+{"type":"git","url":"https://github.com/facebook/react.git","directory":"packages/react-dom"}
+Included license: LICENSE
+
+scheduler@0.25.0 — MIT
+{"type":"git","url":"https://github.com/facebook/react.git","directory":"packages/scheduler"}
+Included license: LICENSE
+
+zod@3.24.2 — MIT
+{"type":"git","url":"git+https://github.com/colinhacks/zod.git"}
+Included license: LICENSE
+
+Liberation Fonts — SIL Open Font License 1.1 (see FONTY-Liberation-OFL.txt)
