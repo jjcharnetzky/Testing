@@ -1,14 +1,14 @@
-import type { Project } from './model';
+import type { Project,ImportedFont } from './model';
 import { singleFile } from './runtime';
 const db = () => new Promise<IDBDatabase>((resolve,reject)=>{
-  const r=indexedDB.open('generator-etykiet',1);
-  r.onupgradeneeded=()=>r.result.createObjectStore('projects',{keyPath:'id'});
+  const r=indexedDB.open('generator-etykiet',2);
+  r.onupgradeneeded=()=>{for(const name of ['projects','fonts'])if(!r.result.objectStoreNames.contains(name))r.result.createObjectStore(name,{keyPath:'id'});};
   r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
 });
-async function transact<T>(mode:IDBTransactionMode,operation:(s:IDBObjectStore)=>IDBRequest<T>):Promise<T> {
+async function transact<T>(mode:IDBTransactionMode,operation:(s:IDBObjectStore)=>IDBRequest<T>,store='projects'):Promise<T> {
   const d=await db();
   return new Promise((resolve,reject)=>{
-    const tx=d.transaction('projects',mode),r=operation(tx.objectStore('projects'));
+    const tx=d.transaction(store,mode),r=operation(tx.objectStore(store));
     tx.oncomplete=()=>{d.close();resolve(r.result);};
     tx.onerror=()=>{d.close();reject(tx.error);};tx.onabort=()=>{d.close();reject(tx.error);};
   });
@@ -42,3 +42,7 @@ export function download(data: BlobPart, name: string, type: string) {
   const url=URL.createObjectURL(new Blob([data],{type}));const a=document.createElement('a');
   a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
+
+const memoryFonts=new Map<string,ImportedFont>();
+export const loadFontLibrary=()=>withFallback(async()=>{const items=await transact('readonly',s=>s.getAll(),'fonts') as ImportedFont[];for(const f of items)memoryFonts.set(f.id,f);return items;},()=>[...memoryFonts.values()]);
+export const saveLibraryFont=(f:ImportedFont)=>withFallback(()=>{memoryFonts.set(f.id,f);return transact('readwrite',s=>s.put(f),'fonts');},()=>{memoryFonts.set(f.id,f);return f.id;});

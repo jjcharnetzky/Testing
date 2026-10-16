@@ -2,11 +2,12 @@ import { type Font, type Glyph } from '@pdf-lib/fontkit';
 import { type Project, type LabelType, type TextObject, PT_TO_MM } from './model';
 import { type LabelInstance, resolveText } from './numbering';
 import { type FontRegistry } from './fonts';
+import { pngInfo } from './png';
 export interface TextLine { text:string; x:number; baseline:number; width:number; glyphs:{glyph:Glyph;x:number}[] }
 export interface TextGeometry { lines:TextLine[]; scale:number; warnings:string[]; width:number;height:number; bounds:{minX:number;minY:number;maxX:number;maxY:number} }
 const measurements=new WeakMap<Font,Map<string,TextGeometry>>();
 export function measureText(font:Font,o:TextObject,text:string):TextGeometry {
-  const key=JSON.stringify([o.fontSize,o.w,o.h,o.align,o.lineHeight,text]);
+  const key=JSON.stringify([o.fontSize,o.w,o.h,o.align,o.valign,o.lineHeight,text]);
   const cache=measurements.get(font)??new Map<string,TextGeometry>();
   measurements.set(font,cache);
   const cached=cache.get(key);if(cached)return {...cached,warnings:[...cached.warnings]};
@@ -15,13 +16,16 @@ export function measureText(font:Font,o:TextObject,text:string):TextGeometry {
   const warnings:string[]=[];
   if(missing.length)warnings.push(`Brak znaków w foncie: ${missing.map(c=>`„${c}”`).join(', ')}.`);
   let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
-  const lines=text.split('\n').map((text,i)=>{
+  const texts=text.split('\n');
+  const height=(font.ascent-font.descent)*scale+Math.max(0,texts.length-1)*o.fontSize*PT_TO_MM*o.lineHeight;
+  const vertical=o.valign==='middle'?(o.h-height)/2:o.valign==='bottom'?o.h-height:0;
+  const lines=texts.map((text,i)=>{
     // pdf-lib encodes this glyph sequence and advances using glyph.advanceWidth.
     // Use the identical metrics and no browser/system font fallback.
     const glyphs=font.layout(text).glyphs;
     const width=glyphs.reduce((s,g)=>s+g.advanceWidth*scale,0);
     const x=o.align==='center'?(o.w-width)/2:o.align==='right'?o.w-width:0;
-    const baseline=font.ascent*scale+i*o.fontSize*PT_TO_MM*o.lineHeight;
+    const baseline=vertical+font.ascent*scale+i*o.fontSize*PT_TO_MM*o.lineHeight;
     let offset=0;
     const positioned=glyphs.map(glyph=>{
       const gx=x+offset,box=glyph.bbox;
@@ -33,7 +37,6 @@ export function measureText(font:Font,o:TextObject,text:string):TextGeometry {
     });
     return {text,x,baseline,width,glyphs:positioned};
   });
-  const height=(font.ascent-font.descent)*scale+Math.max(0,lines.length-1)*o.fontSize*PT_TO_MM*o.lineHeight;
   const width=Math.max(0,...lines.map(l=>l.width));
   if(width>o.w+0.01||height>o.h+0.01||minX< -0.01||minY< -0.01||maxX>o.w+0.01||maxY>o.h+0.01)warnings.push('Tekst wychodzi poza pole. Powiększ pole lub zmień treść / rozmiar fontu.');
   const result={lines,scale,warnings,width,height,bounds:Number.isFinite(minX)?{minX,minY,maxX,maxY}:{minX:0,minY:0,maxX:width,maxY:height}};
@@ -61,6 +64,7 @@ export function preflight(p:Project,labels:LabelInstance[],registry:FontRegistry
       let warnings:string[]=[];
       if(o.kind==='text') warnings=textGeometry(p,t,o,l,registry).warnings;
       else {
+        if(o.kind==='image'){try{const info=pngInfo(o.data);if(info.width!==o.pixelWidth||info.height!==o.pixelHeight)warnings.push('Wymiary PNG nie zgadzają się z projektem.');}catch(e){warnings.push((e as Error).message);}}
         const c=[[0,0],[o.w,0],[o.w,o.kind==='line'?0:o.h],[0,o.kind==='line'?0:o.h]].map(([x,y])=>rotatedPoint(x,y,o.rotation));
         if(c.some(c=>c.x+o.x<0||c.y+o.y<0||c.x+o.x>t.width||c.y+o.y>t.height))warnings.push('Geometria wychodzi poza etykietę.');
       }

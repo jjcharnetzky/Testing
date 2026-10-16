@@ -14,7 +14,7 @@ it('HTTPS: serwuje aplikację z pełną weryfikacją zaufanego certyfikatu',asyn
     await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Brak startu HTTPS')),10000);server.stdout.on('data',d=>{if(String(d).includes('https://localhost:4175')){clearTimeout(timer);resolve();}});server.on('exit',()=>{clearTimeout(timer);reject(new Error('Błąd startu HTTPS'));});});
     const ca=await readFile(cert);
     const response=await new Promise((resolve,reject)=>{https.get('https://127.0.0.1:4175/',{ca},r=>{const verified=r.socket.authorized;let text='';r.setEncoding('utf8');r.on('data',d=>text+=d);r.on('end',()=>resolve({status:r.statusCode,text,verified}));}).on('error',reject);});
-    expect(response.status).toBe(200);expect(response.text).toContain('Generator etykiet');expect(response.verified).toBe(true);
+    expect(response.status).toBe(200);expect(response.text).toContain('Etykietson');expect(response.verified).toBe(true);
   }finally{if(server?.exitCode===null)await new Promise(resolve=>{server.once('exit',resolve);server.kill();});await rm(temp,{recursive:true,force:true});}
 },15000);
 it('HTTPS: brak klucza jest błędem, serwer nie przechodzi po cichu na HTTP',async()=>{

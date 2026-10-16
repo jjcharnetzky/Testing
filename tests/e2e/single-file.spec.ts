@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {PDFDocument} from 'pdf-lib';
+import {unzipSync,strFromU8} from 'fflate';
 import http from 'node:http';
 const directFile=process.env.SINGLE_FILE_FILE_URL==='1';
 const fileUrl=directFile?pathToFileURL(path.resolve('release/Generator-etykiet.html')).href:'http://localhost:4176/';
@@ -13,7 +14,7 @@ test.beforeAll(async()=>{if(directFile)return;const html=readFileSync('release/G
 test.afterAll(async()=>{if(host)await new Promise<void>((resolve,reject)=>host.close(e=>e?reject(e):resolve()));});
 const launchOptions={headless:true,executablePath:process.env.CHROMIUM_PATH||(existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),args:['--no-sandbox']};
 
-test('jeden HTML: komplet zasobów, własny font, eksport/import projektu, PDF i SVG',async({page,context},testInfo)=>{
+test('jeden HTML: komplet zasobów, własny font, eksport/import projektu, PDF i DXF',async({page,context},testInfo)=>{
   const errors:string[]=[],remote:string[]=[];
   page.on('pageerror',e=>errors.push(e.message));
   page.on('request',r=>{if(/^https?:/.test(r.url())&&r.url()!==fileUrl)remote.push(r.url());});
@@ -29,6 +30,7 @@ test('jeden HTML: komplet zasobów, własny font, eksport/import projektu, PDF i
   await page.getByRole('button',{name:'Importuj font TTF / OTF'}).click();
   await page.locator('input[type=file]').nth(1).setInputFiles('public/fonts/LiberationMono-Regular.ttf');
   await expect(page.getByRole('status')).toContainText('Font zapisany lokalnie');
+  await page.getByRole('button',{name:'Dodaj grafikę PNG'}).click();await page.locator('input[type=file]').nth(2).setInputFiles('tests/fixtures/logo-alpha.png');await expect(page.locator('.label-svg image')).toHaveCount(1);
   await page.locator('.project-actions').getByRole('button',{name:'Projekty',exact:true}).click();
   await page.getByLabel('Nazwa bieżącego projektu').fill('Bez instalacji — próba');
   const backupPending=page.waitForEvent('download');await page.getByRole('button',{name:'Pobierz projekt',exact:true}).click();
@@ -46,9 +48,8 @@ test('jeden HTML: komplet zasobów, własny font, eksport/import projektu, PDF i
   const doc=await PDFDocument.load(bytes);
   expect(doc.getPages()[0].getWidth()*25.4/72).toBeCloseTo(1400,5);
   expect(doc.getPages()[0].getHeight()*25.4/72).toBeCloseTo(150,5);
-  const svgPending=page.waitForEvent('download');await page.getByRole('button',{name:'Pobierz SVG',exact:true}).click();
-  const svg=readFileSync((await (await svgPending).path())!,'utf8');
-  expect(svg).toContain('width="1400mm" height="150mm"');expect(svg).not.toContain('<text');
+  const packagePending=page.waitForEvent('download');await page.getByRole('button',{name:'Pobierz pakiet PDF + DXF',exact:true}).click();
+  const files=unzipSync(readFileSync((await (await packagePending).path())!));expect(files['arkusz-001.pdf']).toBeDefined();expect(strFromU8(files['arkusz-001.dxf'])).toContain('HATCH');expect(files['obrazy/grafika-001.png']).toEqual(new Uint8Array(readFileSync('tests/fixtures/logo-alpha.png')));
   await page.getByRole('button',{name:'Zamknij',exact:true}).click();
   await page.getByRole('button',{name:'Instrukcja',exact:true}).first().click();
   await expect(page.getByText('Otwieranie bez instalacji',{exact:true})).toBeVisible();

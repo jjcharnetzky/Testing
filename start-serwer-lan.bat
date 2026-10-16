@@ -15,7 +15,7 @@ if not exist "dist\index.html" (
 )
 set "LABEL_HOST=0.0.0.0"
 set "LABEL_PORT=4173"
-echo Generator etykiet - serwer firmowej sieci LAN
+echo Etykietson - serwer firmowej sieci LAN
 if defined LABEL_TLS_CERT (
   echo Tryb HTTPS: używane będą skonfigurowane certyfikat i klucz.
 ) else (

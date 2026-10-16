@@ -23,4 +23,8 @@ for(const [name,files] of [['Generator-etykiet-LAN',offline],['Generator-etykiet
 }
 const standalone=await readFile('release/Generator-etykiet.html');
 outputs.push(createHash('sha256').update(standalone).digest('hex')+'  Generator-etykiet.html');
+const singleZip=zipSync({'Generator-etykiet.html':standalone,'BEZ-INSTALACJI.md':await readFile('BEZ-INSTALACJI.md')},{level:6});
+await writeFile('release/Generator-etykiet-bez-instalacji.zip',singleZip);
+outputs.push(createHash('sha256').update(singleZip).digest('hex')+'  Generator-etykiet-bez-instalacji.zip');
+console.log('release/Generator-etykiet-bez-instalacji.zip — Etykietson, jeden HTML i instrukcja.');
 await writeFile('release/SHA256SUMS.txt',outputs.join('\n')+'\n');

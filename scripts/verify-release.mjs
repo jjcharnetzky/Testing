@@ -10,13 +10,16 @@ import {once} from 'node:events';
 import {createHash} from 'node:crypto';
 import {PDFDocument} from 'pdf-lib';
 const distribution=process.argv[2]||'Generator-etykiet-offline';
+const port=Number(process.env.LABEL_VERIFY_PORT||4173);
+if(!Number.isInteger(port)||port<1024||port>65535)throw new Error('Niepoprawny port testera.');
+const origin=`http://localhost:${port}`;
 if(!['Generator-etykiet-offline','Generator-etykiet-LAN'].includes(distribution))throw new Error('Nieznana paczka.');
 const temp=await mkdtemp(path.join(tmpdir(),'etykiety-release-'));
 let server,browser;
 async function start(){
-  let output='';server=spawn(process.execPath,['server.mjs'],{cwd:path.join(temp,distribution),stdio:['ignore','pipe','pipe']});
+  let output='';server=spawn(process.execPath,['server.mjs'],{cwd:path.join(temp,distribution),env:{...process.env,LABEL_HOST:'127.0.0.1',LABEL_PORT:String(port)},stdio:['ignore','pipe','pipe']});
   server.stdout.on('data',d=>output+=d);server.stderr.on('data',d=>output+=d);
-  await Promise.race([new Promise((resolve,reject)=>{server.stdout.on('data',()=>{if(output.includes('http://localhost:4173'))resolve();});server.on('exit',()=>reject(new Error(output)));}),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Serwer nie uruchomił się: '+output)),10000))]);
+  await Promise.race([new Promise((resolve,reject)=>{server.stdout.on('data',()=>{if(output.includes(origin))resolve();});server.on('exit',()=>reject(new Error(output)));}),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Serwer nie uruchomił się: '+output)),10000))]);
 }
 async function stop(){if(server&&server.exitCode===null){const closed=once(server,'exit');server.kill();await closed;}server=undefined;}
 try{
@@ -33,7 +36,7 @@ try{
   browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||(existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),args:['--no-sandbox']});
   const context=await browser.newContext();const external=[];
   await context.route('**/*',route=>{if(new URL(route.request().url()).hostname==='localhost')return route.continue();external.push(route.request().url());return route.abort();});
-  let page=await context.newPage();await page.goto('http://localhost:4173');
+  let page=await context.newPage();await page.goto(origin);
   await page.waitForFunction(()=>document.querySelectorAll('.label-svg path').length>5);
   await page.locator('.project-actions').getByRole('button',{name:'Projekty',exact:true}).click();
   await page.getByLabel('Nazwa bieżącego projektu').fill('Próba restartu paczki offline');
@@ -41,7 +44,7 @@ try{
   await page.waitForFunction(()=>document.querySelector('.project-meta')?.textContent.includes('Zapisano lokalnie'));
   await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
   await page.close();await stop();await start();
-  page=await context.newPage();await page.goto('http://localhost:4173');
+  page=await context.newPage();await page.goto(origin);
   await page.waitForFunction(()=>document.querySelector('.project-name')?.textContent.includes('Próba restartu paczki offline'));
   await context.setOffline(true);await page.reload();await page.waitForFunction(()=>document.querySelectorAll('.label-svg path').length>5);
   await page.getByLabel('Nazwa elementu na etykiecie').fill('Próba po restarcie');

@@ -1,55 +1,53 @@
-# Wyniki weryfikacji
+# Weryfikacja Etykietson 2.0
 
-Wykonano 16.10.2026 w środowisku Linux, Node.js 24.19.0, Chromium z Playwright. **Nie wykonano testu na rzeczywistym Windows, ploterze ani RIP.**
+Wykonano 16.10.2026: Linux, Node.js 24.19.0, TypeScript 5.7, Chromium / Playwright. Aplikacja i generowanie plików działają w przeglądarce, bez dodatkowych programów na stanowisku użytkownika.
 
-## Zakończone sprawdzenia
+## Wyniki
 
-- Dostosowanie do sieci LAN: test serwera HTTPS z zaufanym certyfikatem i pełną weryfikacją TLS; brak klucza zatrzymuje serwer zamiast przełączać na HTTP. Przetestowano także UUID w środowisku bez `crypto.randomUUID`. Dwa dodatkowe scenariusze Chromium łączą się z rzeczywistym adresem IPv4 maszyny (bez `localhost`), sprawdzają tworzenie, zapis po odświeżeniu, PDF 1400 × 180 mm dla 141 etykiet oraz rozdzielenie projektów dwóch stanowisk. W teście LAN dozwolone jest bezpośrednie połączenie wyłącznie do interfejsu testowej maszyny i loopback; pozostałe adresy są kierowane na nieaktywny lokalny port proxy.
-- `npm run check`: kompilacja typów TypeScript bez błędów.
-- `npm test`: **30/30 zaliczonych**, bez testów pominiętych. Testy obejmują numerację A/B/C, zamierzone i niezamierzone powtórzenia, krok i format, przejście powyżej 999, trwałość miesiąca/roku, niezależność numerów od układu/obrotu/szablonu/eksportu, ilości, marginesy, odstępy, półki o różnych rozmiarach, obrót opcjonalny, podział stron, kolizje, granice szerokości i scalanie odcinków. Sprawdzono również polskie glify, brak glifu, długą nazwę i numer, przepełnienie wielowierszowe i obrócone, import/eksport projektu z fontami oraz odrzucanie niepoprawnych plików.
-- `npm run build`: gotowy build produkcyjny w `dist`, lokalne zasoby i wersjonowany Service Worker. Vite zgłasza informację o dużym pakiecie JS (~1,35 MB przed kompresją; zawiera silniki PDF/fontów); nie jest to błąd buildu ani zasób pobierany z internetu podczas pracy.
-- `npm run test:e2e`: **9/9 zaliczonych** w rzeczywistym Chromium. Sprawdzono projekt demo, PDF/SVG, edycję, duplikowanie/usuwanie obiektów, przesunięcie myszą, cofanie/ponawianie, niezależny szablon, numerację B/C, ostrzeganie o przepełnieniu i blokadę za szerokiej etykiety. Test offline importuje własny TTF, eksportuje i importuje kompletny projekt z fontami, odłącza sieć przez Playwright, ponownie ładuje aplikację z Service Workera, otwiera zapisany projekt, edytuje i pobiera PDF. Zarejestrowano **0 żądań do zewnętrznych hostów**.
-- Dodatkowe sprawdzenie narzędziami `pdfinfo`, `pdffonts` i `pdftotext`: PDF jest wektorowy, strona 1400 × 150 mm, użyte fonty osadzone, mapa Unicode dostępna, tekst „Zażółć gęślą jaźń” odzyskiwany poprawnie. Test automatyczny sprawdza brak obrazów w zasobach PDF, obecność strumieni fontów i fizyczne rozmiary wielostronicowego eksportu. SVG zawiera mm, viewBox i ścieżki glifów, bez obiektów tekstowych i siatki edytora.
+- **`npm run build` — zaliczony**. Kontrola TypeScript, build `dist`, Service Worker i samowystarczalny `release/Generator-etykiet.html` (8,62 MiB). Biblioteki, style, 12 odmian Liberation i licencje są lokalne. Vite informuje o wielkości głównego JS (ok. 1,48 MB); build zakończył się poprawnie.
+- **`npm test` — 42/42**. Dotychczasowe przypadki numeracji A/B/C, układu, marginesów, podziału stron, wspólnych granic, glifów i PDF oraz nowe przypadki: stare projekty v1 bez przemieszczeń, pionowe wyrównanie bloków wielowierszowych, centrowanie grupy osobnych pól, rozpoznawanie odmian Arial, brak fontu bez cichego zamiennika, import prawdziwego lokalnego TTF, PNG/CRC/proporcje/zapis, kanał alfa PDF, obrót obrazu, IMAGE/IMAGEDEF, wypełnione kontury glifów, ZIP z kilkoma arkuszami i deduplikacja PNG. Dwa testy HTTPS weryfikują zaufany certyfikat; brak klucza zatrzymuje serwer bez przechodzenia na HTTP.
+- **`npm run test:e2e` — 12/12**. Projekt demo; edycja tekstu, geometria i drag; cofanie; kopia szablonu; numeracja i błędy eksportu; działanie po odłączeniu sieci; jednorazowa biblioteka fontów po odświeżeniu i w nowym projekcie; migracja istniejącej bazy IndexedDB v1 do v2; PNG przez przycisk i drop, uchwyt rozmiaru, blokada proporcji, obrót, warstwy, duplikowanie, wymiana, usuwanie, zapis/odtworzenie oraz przenoszenie projektu; PDF + DXF offline. Dwa scenariusze LAN używają rzeczywistego adresu IPv4 maszyny i sprawdzają osobne dane stanowisk. Testy sieciowe zachowują dotychczasowe ograniczenia połączeń lokalnych.
+- **Audyt CAD w ezdxf 1.4.4 — 4/4 plików: 0 błędów, 0 napraw**. DXF AC1021, jednostki 4 = mm, model space, puste paperspace, wypełnione HATCH z otworami, geometryczne obramowania, bez TEXT/MTEXT zależnych od systemowych fontów. IMAGE/IMAGEDEF oraz reaktory są poprawne; ścieżki `obrazy/grafika-001.png` wskazują istniejące pliki. Przezroczystość włączona, ramka obrazu wyłączona przez RASTERVARIABLES. Powtórzenie: `npm test`, następnie `XDG_CACHE_HOME=/tmp/etykietson-cache python scripts/verify-cad.py` (ezdxf jest wyłącznie narzędziem programisty).
+- **Niezależne porównanie renderów PDF/CAD**: próbka 50 × 30 mm z polskimi literami, numerem i PNG, 254 dpi, PDF przez PyMuPDF, DXF przez ezdxf/Matplotlib. Pozycje tekstu i linii pokrywają się w granicy 0,1 mm (100% pikseli wektorowych próbki ma odpowiednik w tym sąsiedztwie); PNG wyłączono z tej miary. Oddzielnie sprawdzono osadzony kanał alfa PDF, dane PNG bez modyfikacji oraz wektory pozycji/skali/obrotu obrazu w DXF, także przy obrocie całej etykiety o 90°. To porównanie próbki, nie certyfikacja całego oprogramowania CAD.
 
-## Pojedynczy HTML bez instalacji
+**Gotowa paczka LAN:** `LABEL_VERIFY_PORT=4177 node scripts/verify-release.mjs Generator-etykiet-LAN` zakończył się kodem 0. Potwierdzono sumy SHA-256, uruchomienie wypakowanego buildu bez `node_modules`, restart serwera i aplikacji, zachowanie projektu, edycję i PDF offline oraz 0 żądań zewnętrznych. Użyto osobnego portu testowego, ponieważ 4173 był zajęty.
 
-`release/Generator-etykiet.html` (ok. 8,5 MB) zawiera całą aplikację, 12 fontów, style oraz licencje. Połączenia sieciowe są blokowane jego CSP. Trzy dodatkowe scenariusze przeszły: komplet zasobów i eksport/import z własnym fontem, PDF i SVG po odłączeniu sieci; zapis IndexedDB po całkowitym zamknięciu i ponownym uruchomieniu przeglądarki; edycja, pobieranie projektu i PDF przy celowo zablokowanych IndexedDB oraz localStorage. W ostatnim wariancie aplikacja wyraźnie pokazuje, że zapis istnieje tylko w bieżącej karcie.
-
-Naprawiono także krótki okres, w którym po edycji stary komunikat „Zapisano lokalnie” mógł pozostać widoczny przed rozpoczęciem nowej transakcji. Teraz edycja natychmiast pokazuje „Zapisywanie…”, a stan zapisany pojawia się dopiero po zakończeniu transakcji.
-
-**Ograniczenie testera:** bezpośrednia nawigacja do `file:///…/Generator-etykiet.html` została zablokowana przez administracyjną politykę Chromium (`ERR_BLOCKED_BY_ADMINISTRATOR`). Nie zmieniano polityki. Testy zakończone powodzeniem ładują dokładnie ten sam samowystarczalny HTML przez lokalny serwer testera, a przed edycją i eksportem odłączają sieć. Przy sprawdzeniu ponownego uruchomienia przeglądarki HTML jest każdorazowo ładowany przez tester, a następnie sieć jest odłączana. Tego wyniku nie należy opisywać jako wykonanego testu `file://` na Windows. Bezpośrednie otwarcie pliku w docelowym Edge/Chrome pozostaje do potwierdzenia; instrukcja i sposób odtworzenia wariantu w BEZ-INSTALACJI.md.
-
-## Obowiązkowe przypadki odbioru
+## Przypadki wymiarów i kompletności
 
 | Przypadek | Wynik |
 |---|---|
-| 28 × 50 × 30 mm na szerokości 1400 mm | 28 etykiet, 1 wiersz, 30 mm długości |
-| 29 × 50 × 30 mm | Dokładnie 29 etykiet, 2 wiersze, 60 mm |
-| 140 × 50 × 30 mm | Dokładnie 140 etykiet, 5 wierszy, 150 mm |
-| Szerokość etykiety 1401 mm na materiale 1400 mm | Czytelny błąd; eksport zablokowany |
-| Wspólna krawędź dwóch etykiet | Jedna granica, łącznie 5 scalonych odcinków obrysu |
-| Częściowo pokrywające się odcinki 0–50 i 25–75 mm | Jeden odcinek 0–75 mm |
-| Zmiana układu i powtórzony eksport | Numery identyczne |
-| Odłączenie sieci, ponowne otwarcie, edycja i PDF | Zaliczony test przeglądarkowy offline |
+| 28 etykiet 50 × 30 mm, materiał 1400 mm, przerwy/marginesy 0 | Jeden wiersz, wysokość 30 mm |
+| 29 etykiet bez ograniczenia długości | Dwa wiersze, wysokość 60 mm |
+| 140 etykiet demo | Pięć wierszy, arkusz 1400 × 150 mm |
+| 29 etykiet, limit arkusza 30 mm | Dwa PDF i dwa DXF o odpowiadających nazwach; 28 + 1 etykiet |
+| Wspólna krawędź dwóch etykiet | Jedna granica; pięć scalonych odcinków obramowania |
+| Powtórzony eksport / zmiana układu | Brak zmian numeracji |
+| 28 powtórzeń tego samego PNG | Jeden plik PNG w ZIP, osobne poprawnie położone IMAGE |
+| Pakiet produkcyjny | `arkusz-NNN.pdf`, `arkusz-NNN.dxf`, `obrazy/`, `zestawienie.csv`, instrukcja |
+| Stary projekt i aktualizacja lokalnej bazy | Te same pozycje, teksty, numery i identyfikatory; centrowanie dopiero po poleceniu użytkownika |
 
-`node scripts/verify-release.mjs`: **zaliczony, kod wyjścia 0**. Sprawdzono sumy SHA-256 i gotowy ZIP wypakowany do katalogu tymczasowego. Serwer uruchomił się bez `node_modules`, przy dopuszczeniu wyłącznie localhost. Zapisano projekt, zatrzymano i ponownie uruchomiono serwer oraz aplikację, potwierdzono zachowane dane, odłączono sieć przeglądarki, wykonano edycję i wyeksportowano PDF 1400 × 150 mm. **0 żądań do hostów zewnętrznych.** Do powtórzenia tego testu port 4173 musi być wolny.
+## Pojedynczy HTML
 
-`npm ci --cache /tmp/generator-npm-cache --no-audit --no-fund`: odtworzenie 112 pakietów z lockfile zakończone pomyślnie. Następnie ponownie wykonano build. Początkowy przebieg osobnego testu paczki został zakłócony w sprzątaniu przeglądarki przez równoległą reinstalację zależności testera; po zakończeniu instalacji wykonano go ponownie w całości, z wynikiem powyżej.
+Trzy scenariusze sprawdzają dokładny plik przekazania: osadzone zasoby, lokalny TTF i PNG, przenośny projekt oraz eksport PDF + DXF po odłączeniu sieci; zachowanie projektu po całkowitym zamknięciu i ponownym uruchomieniu przeglądarki; pracę przy zablokowanych IndexedDB i localStorage z jawnym komunikatem o zapisie tylko w bieżącej karcie. CSP pojedynczego HTML blokuje połączenia sieciowe; nie ma pobierania fontów ani bibliotek z hostów zewnętrznych.
+
+Chromium tej chmury administracyjnie blokuje nawigację `file://` (`ERR_BLOCKED_BY_ADMINISTRATOR`). Polityki nie zmieniano. Test ładuje **te same bajty pojedynczego HTML** przez lokalny serwer testera, po czym odłącza sieć przed edycją i eksportem. Przy restarcie przeglądarki HTML jest ponownie ładowany przez tester, a następnie sieć jest odłączana. Bezpośrednie otwarcie pobranego pliku na docelowym Windows pozostaje do sprawdzenia w jego Edge/Chrome. Sposób powtórzenia testu `file://` w środowisku dopuszczającym pliki lokalne: `SINGLE_FILE_FILE_URL=1 npx playwright test tests/e2e/single-file.spec.ts`.
+
+## Ograniczenia weryfikacji
+
+**Brak plików Arial w repozytorium i środowisku testowym.** Sprawdzono rozpoznawanie metadanych odmian Regular/Bold/Black, osobną rodzinę Black, brak zamienników, walidację błędnego pliku dla wybranej odmiany i pełny mechanizm zapamiętywanego importu/eksportu na rzeczywistym Liberation TTF z polskimi znakami. Nie wykonano renderowania rzeczywistych plików Arial, Arial Bold ani Arial Black. Użytkownik wczytuje własne TTF/OTF w oknie Czcionki; te same bajty trafiają do edytora i PDF, a DXF wykorzystuje ich kontury.
+
+**Nie wykonano testu otwarcia w DraftSight 2024.** Wybrano DXF 2007 i sprawdzono go niezależnym parserem oraz rendererem. Nie ma eksportu DWG — użyte biblioteki nie generują tego formatu offline. Nie stosuje się zmiany rozszerzenia ani obowiązkowych konwerterów.
+
+Nie wykonano testu Windows, plotera, sterownika ani RIP. Przed produkcją pozostaje wydruk kontrolny 100%, sprawdzenie wymiarów, zachowania PNG i linii w docelowym CAD/RIP oraz trwałości zapisu w firmowym profilu przeglądarki.
 
 ## Pliki przekazania
 
-- `release/Generator-etykiet.html`: samowystarczalna aplikacja do otwarcia w przeglądarce, z fontami i licencjami; bez instalacji, Node.js i serwera.
-- `dist/`: produkcyjny build, lokalne fonty i Service Worker.
-- `release/Generator-etykiet-LAN.zip`: paczka serwera firmowej sieci, z `start-serwer-lan.bat`, obsługą HTTP/HTTPS i instrukcją SIEC-FIRMOWA.md.
-- `release/Generator-etykiet-offline.zip`: gotowa paczka stanowiskowa, serwer Node.js, `start.bat`, dokumentacja, przykłady i licencje; bez npm i `node_modules`.
-- `release/Generator-etykiet-projekt.zip`: komplet źródeł, testy, skrypty, lockfile i gotowy build.
-- `release/SHA256SUMS.txt` oraz manifesty wewnątrz ZIP: sumy do weryfikacji przeniesienia.
-- `przyklady/projekt-demonstracyjny.etykiety.json`: kompletne zlecenie 40/25/60/10/5 wraz z fontami.
-- `przyklady/demo-140-etykiet.pdf`: wyeksportowany przykład 1400 × 150 mm.
-- `przyklady/kontrola-skali-50x30-100mm.pdf`: etykieta 50 × 30 mm i odcinek kontrolny 100 mm na stronie 200 × 70 mm.
+- `release/Generator-etykiet.html`: Etykietson do otwarcia bez instalacji; zachowana dotychczasowa nazwa pliku dla ciągłości zapisu.
+- `release/Generator-etykiet-bez-instalacji.zip`: ten sam HTML i instrukcja.
+- `dist/`: build serwerowy i lokalny Service Worker.
+- `release/Generator-etykiet-LAN.zip`, `release/Generator-etykiet-offline.zip`: gotowy serwer, build, skrypty startowe, instrukcje, przykłady i licencje; bez `node_modules`.
+- `release/Generator-etykiet-projekt.zip`: źródła, testy, skrypty, lockfile i build.
+- `release/SHA256SUMS.txt`: sumy wszystkich paczek i pojedynczego HTML; manifesty również wewnątrz paczek serwerowych.
+- `przyklady/`: dotychczasowy projekt formatu 1 i PDF, zachowane także jako przykłady kompatybilności.
 
-## Do sprawdzenia na stanowisku produkcyjnym
-
-Uruchomienie `start.bat` na docelowym Windows, profil i trwałość danych przeglądarki, wydruk kontrolny w skali 100%, wymiary w obu osiach, obsługa fontów oraz stron przez właściwy RIP, kolor, jakość linii i rzeczywista szerokość materiału. Tej zgodności nie można potwierdzić testami przeglądarkowymi.
-
-Test pakietu LAN można odtworzyć poleceniem `node scripts/verify-release.mjs Generator-etykiet-LAN` przy wolnym porcie 4173. Weryfikuje odtworzenie serwera z gotowej paczki bez node_modules, zachowanie danych, restart i PDF offline.
+Test gotowej paczki można powtórzyć przy wolnym porcie 4173: `node scripts/verify-release.mjs` albo `node scripts/verify-release.mjs Generator-etykiet-LAN`. Gdy domyślny port jest zajęty, ustaw wyłącznie port testera: `LABEL_VERIFY_PORT=4177 node scripts/verify-release.mjs Generator-etykiet-LAN`. Nie zmienia to domyślnego portu aplikacji. Tester sprawdza SHA-256, uruchomienie wypakowanego serwera bez node_modules, restart, zapis projektu, edycję i PDF offline bez żądań do zewnętrznych hostów.

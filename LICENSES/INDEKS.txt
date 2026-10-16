@@ -8,6 +8,10 @@ pako@1.0.11 — (MIT AND Zlib)
 "nodeca/pako"
 Included license: LICENSE
 
+@tarikjabiri/dxf@2.8.9 — MIT
+"https://github.com/dxfjs/writer"
+Included license: LICENSE.md
+
 fflate@0.8.2 — MIT
 "https://github.com/101arrowz/fflate"
 Included license: LICENSE

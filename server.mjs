@@ -29,7 +29,7 @@ const server=tls?https.createServer(tls,handle):http.createServer(handle);
 server.on('error',error=>{console.error('Nie można uruchomić serwera:',error.message);process.exit(1);});
 server.listen(port,host,()=>{
   const scheme=tls?'https':'http';
-  console.log(`Generator etykiet: ${scheme}://localhost:${port} (Ctrl+C kończy pracę)`);
+  console.log(`Etykietson: ${scheme}://localhost:${port} (Ctrl+C kończy pracę)`);
   if(host==='0.0.0.0'||host==='::'){
     const addresses=[...new Set(Object.values(networkInterfaces()).flat().filter(i=>i&&!i.internal&&i.family==='IPv4').map(i=>i.address))];
     console.log('\nAdresy dla użytkowników sieci firmowej:');

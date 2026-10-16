@@ -1,4 +1,4 @@
-# Generator etykiet jako aplikacja webowa w sieci firmowej
+# Etykietson jako aplikacja webowa w sieci firmowej
 
 **Jeden komputer uruchamia serwer. Pozostałe stanowiska otwierają aplikację w Edge lub Chrome, bez instalowania Node.js i bez skryptów startowych.** Internet nie jest potrzebny ani serwerowi, ani użytkownikom. Aplikacja nie korzysta z usług chmurowych.
 
@@ -8,14 +8,14 @@
 2. Rozpakuj **`Generator-etykiet-LAN.zip`**. Zachowaj cały folder `dist` oraz `server.mjs` i skrypty. Niczego nie pobieraj przez npm.
 3. Uruchom **`start-serwer-lan.bat`**. Serwer nasłuchuje na interfejsach sieciowych, na stałym porcie **4173**. Okno wyświetli dostępne adresy IPv4, np. `http://192.168.1.20:4173` (to przykład; użyj adresu rzeczywiście wyświetlonego na swoim serwerze).
 4. Jeśli Zapora Windows wyświetli pytanie, zezwól Node.js na dostęp w używanej sieci prywatnej lub domenowej. Administrator może zamiast tego dodać regułę TCP 4173 z dostępem z firmowej podsieci. Skrypt sam nie zmienia zapory.
-5. Na drugim komputerze otwórz **wyświetlony adres** w Edge/Chrome. Dodaj go do zakładek. Dostępne są edycja, automatyczny zapis, numeracja i pobieranie PDF/SVG.
+5. Na drugim komputerze otwórz **wyświetlony adres** w Edge/Chrome. Dodaj go do zakładek. Dostępne są edycja, automatyczny zapis, numeracja i pobieranie PDF/DXF.
 6. Okno serwera musi pozostać uruchomione, a komputer nie może przechodzić w uśpienie podczas pracy innych stanowisk. Zatrzymanie: `Ctrl+C`.
 
 Adres `localhost` zawsze wskazuje komputer użytkownika. Na innych stanowiskach używaj adresu lub nazwy komputera-serwera. Administrator powinien nadać mu stały adres IP lub rezerwację DHCP i ewentualnie stałą nazwę DNS, np. `etykiety.firma.local`. Nie jest potrzebna publiczna domena ani publikacja w internecie.
 
 ## HTTP i praca bez internetu
 
-Przez zwykły **HTTP w sieci LAN** aplikacja pozwala tworzyć i edytować projekty oraz eksportować PDF/SVG. Nie potrzebuje internetu, ale potrzebuje połączenia z serwerem firmowym do otwarcia strony i jej zasobów. W nagłówku wyświetla się **„Sieć lokalna · tryb online”** — chodzi o połączenie z serwerem LAN.
+Przez zwykły **HTTP w sieci LAN** aplikacja pozwala tworzyć i edytować projekty oraz eksportować PDF/DXF. Nie potrzebuje internetu, ale potrzebuje połączenia z serwerem firmowym do otwarcia strony i jej zasobów. W nagłówku wyświetla się **„Sieć lokalna · tryb online”** — chodzi o połączenie z serwerem LAN.
 
 Przeglądarki dopuszczają Service Workera, czyli ponowne uruchamianie aplikacji po utracie również sieci lokalnej, pod **HTTPS** lub pod `localhost`. Zwykły adres `http://192.168…` nie spełnia tego warunku. Aplikacja pokazuje **„Gotowy do pracy offline”** dopiero po faktycznym zapisaniu zasobów przez Service Workera.
 
